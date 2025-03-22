@@ -1,0 +1,26 @@
+{
+  "name": "text-based-game",
+  "version": "1.0.0",
+  "description": "A text-based multiplayer game built with Node.js, Express, Socket.IO, and Redis for scaling.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "game",
+    "text-based",
+    "multiplayer",
+    "socket.io",
+    "express",
+    "redis",
+    "heroku"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1",
+    "socket.io-redis": "^6.1.1"
+  }
+}

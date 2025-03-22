@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Text Multiplayer Game</title>
+  </head>
+  <body>
+    <h1>Welcome to the Text-Based Multiplayer Game!</h1>
+    <p>If you see this page, your server is working!</p>
+
+    <!-- Load the Socket.IO client library -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      // Connect to the server
+      const socket = io();
+
+      // When connected, log a message in the browser console
+      socket.on('connect', () => {
+        console.log('Connected to the server via Socket.IO');
+      });
+
+      // Listen for messages from the server and show them in the console
+      socket.on('message', (msg) => {
+        console.log('Message from server:', msg);
+      });
+    </script>
+  </body>
+</html>
