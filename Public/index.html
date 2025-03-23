@@ -3,25 +3,112 @@
   <head>
     <meta charset="utf-8">
     <title>Text Multiplayer Game</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      #location {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      #exits a {
+        margin-right: 15px;
+        text-decoration: none;
+        color: blue;
+        cursor: pointer;
+      }
+      #chat {
+        border: 1px solid #ccc;
+        height: 200px;
+        overflow-y: scroll;
+        padding: 10px;
+      }
+      #chat p {
+        margin: 5px 0;
+      }
+    </style>
   </head>
   <body>
-    <h1>Welcome to the Text-Based Multiplayer Game!</h1>
-    <p>If you see this page, your server is working!</p>
+    <h1>Text Multiplayer Game</h1>
+    <div id="location">
+      <!-- Location description will be displayed here -->
+    </div>
+    <div id="exits">
+      <!-- Clickable links for available exits will appear here -->
+    </div>
+    <hr>
+    <div id="chat">
+      <!-- Chat messages will appear here -->
+    </div>
+    <input id="chatInput" type="text" placeholder="Type a message..." />
+    <button id="chatSend">Send</button>
 
-    <!-- Load the Socket.IO client library -->
+    <!-- Socket.IO client library -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      // Connect to the server
       const socket = io();
 
-      // When connected, log a message in the browser console
+      // Ask for a username and send joinGame event
       socket.on('connect', () => {
-        console.log('Connected to the server via Socket.IO');
+        let username = prompt("Enter your username:");
+        if (!username) {
+          username = "Guest" + Math.floor(Math.random() * 1000);
+        }
+        socket.emit('joinGame', username);
       });
 
-      // Listen for messages from the server and show them in the console
+      // Update location display when the server sends a locationUpdate event
+      socket.on('locationUpdate', (data) => {
+        const locationDiv = document.getElementById('location');
+        const exitsDiv = document.getElementById('exits');
+
+        // Update the location description
+        locationDiv.textContent = data.description;
+
+        // Clear previous exit links
+        exitsDiv.innerHTML = '';
+
+        // Create a clickable link for each exit
+        for (let exit in data.exits) {
+          const link = document.createElement('a');
+          link.textContent = exit;
+          link.href = "#";
+          link.onclick = (e) => {
+            e.preventDefault();
+            // Emit a "move" event with the chosen destination
+            socket.emit('move', exit);
+          };
+          exitsDiv.appendChild(link);
+        }
+      });
+
+      // Display chat messages from the server
       socket.on('message', (msg) => {
-        console.log('Message from server:', msg);
+        const chatDiv = document.getElementById('chat');
+        const p = document.createElement('p');
+        p.textContent = msg;
+        chatDiv.appendChild(p);
+        // Auto-scroll to the bottom
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      });
+
+      // Send chat messages when the "Send" button is clicked
+      document.getElementById('chatSend').onclick = () => {
+        const chatInput = document.getElementById('chatInput');
+        const text = chatInput.value;
+        if (text) {
+          socket.emit('message', text);
+          chatInput.value = '';
+        }
+      };
+
+      // Allow sending chat messages by pressing Enter
+      document.getElementById('chatInput').addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') {
+          document.getElementById('chatSend').click();
+        }
       });
     </script>
   </body>
