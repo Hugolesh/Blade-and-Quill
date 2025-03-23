@@ -47,8 +47,8 @@ c. In Replit, pull the latest changes (or re-import) to update your deployed pro
 End of Guide
 ===========================================
 Make changes in VS Code.
+git commit -m "Initial commit"
+git push -u origin main
 Commit and push those changes to GitHub.
 In Replit, open the Shell and run:
-bash
-Copy
 git pull origin main
