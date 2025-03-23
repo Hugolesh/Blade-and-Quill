@@ -9,10 +9,11 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Global object to track players: key is socket.id and value is player data.
+// Global object to track players
+// Key: socket.id, Value: { username, location, inventory, level }
 const players = {};
 
-// Define a simple game world with locations and available exits.
+// Define a simple game world with locations and available exits
 const world = {
   house: {
     description: "You are in your house. It's cozy and familiar. Available exit: store",
@@ -43,61 +44,66 @@ if (process.env.REDIS_URL) {
 app.use(express.static(__dirname + '/public'));
 
 io.on('connection', (socket) => {
-  // Initialize player state
+  // Initialize player state upon connection
   players[socket.id] = {
-    username: null,
-    location: "house", // Start at "house"
+    username: null,      // To be set when the player joins
+    location: "house",   // Starting location
     inventory: [],
-    level: 1
+    level: 1             // Starting level
   };
 
   console.log('A user connected:', socket.id);
 
-  // When a player joins, store their username and send their starting location.
+  // When a user joins the game, store their username and send initial location info
   socket.on('joinGame', (username) => {
     console.log(`${username} joined the game`);
     socket.username = username;
     players[socket.id].username = username;
 
-    // Welcome message and location update to the new player
+    // Send welcome message and starting location to the player
     socket.emit('message', `Welcome, ${username}!`);
     socket.emit('locationUpdate', {
       description: world[players[socket.id].location].description,
-      exits: world[players[socket.id].location].exits
+      exits: world[players[socket.id].location].exits,
+      currentLocation: players[socket.id].location
     });
 
+    // Announce the new player to everyone
     io.emit('message', `${username} has joined the game.`);
   });
 
-  // Listen for "move" events when a player clicks an exit link.
+  // Listen for "move" events triggered by clicking on a location link
   socket.on('move', (destination) => {
     const currentLocation = players[socket.id].location;
     const availableExits = world[currentLocation].exits;
     
     if (availableExits[destination]) {
+      // Update the player's location
       players[socket.id].location = availableExits[destination];
       const newLocation = players[socket.id].location;
-      
-      // Send updated location information to the moving player
+      // Send updated location info back to the player
       socket.emit('locationUpdate', {
         description: world[newLocation].description,
-        exits: world[newLocation].exits
+        exits: world[newLocation].exits,
+        currentLocation: newLocation
       });
     } else {
-      // If the destination is not available from the current location
+      // Inform the player if the move is invalid
       socket.emit('locationUpdate', {
         description: "You can't go that way from here!",
-        exits: availableExits
+        exits: availableExits,
+        currentLocation: currentLocation
       });
     }
   });
 
-  // Regular chat messages broadcast to everyone
+  // Handle regular chat messages
   socket.on('message', (msg) => {
     console.log(`Message from ${socket.username}: ${msg}`);
     io.emit('message', `${socket.username}: ${msg}`);
   });
 
+  // Clean up on disconnect
   socket.on('disconnect', () => {
     console.log(`${socket.username} disconnected`);
     io.emit('message', `${socket.username} left the game.`);

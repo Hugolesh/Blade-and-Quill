@@ -7,50 +7,85 @@
       body {
         font-family: Arial, sans-serif;
         margin: 20px;
+        background-color: #f4f4f4;
+      }
+      h1 {
+        color: #333;
       }
       #location {
-        border: 1px solid #ccc;
-        padding: 10px;
+        border: 2px solid #333;
+        padding: 15px;
         margin-bottom: 10px;
+        background: #fff;
+        border-radius: 5px;
+      }
+      #exits {
+        margin-bottom: 20px;
       }
       #exits a {
-        margin-right: 15px;
+        display: inline-block;
+        padding: 10px 15px;
+        margin: 5px;
+        background-color: #007BFF;
+        color: #fff;
         text-decoration: none;
-        color: blue;
-        cursor: pointer;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+      }
+      #exits a:hover {
+        background-color: #0056b3;
       }
       #chat {
         border: 1px solid #ccc;
         height: 200px;
-        overflow-y: scroll;
+        overflow-y: auto;
         padding: 10px;
+        background: #fff;
+        border-radius: 5px;
       }
       #chat p {
         margin: 5px 0;
+      }
+      #controls {
+        margin-top: 10px;
+      }
+      #chatInput {
+        width: 70%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      #chatSend {
+        padding: 8px 12px;
+        border: none;
+        background-color: #28a745;
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+      #chatSend:hover {
+        background-color: #218838;
       }
     </style>
   </head>
   <body>
     <h1>Text Multiplayer Game</h1>
-    <div id="location">
-      <!-- Location description will be displayed here -->
-    </div>
-    <div id="exits">
-      <!-- Clickable links for available exits will appear here -->
+    <div id="location">Loading location...</div>
+    <div id="exits">Loading exits...</div>
+    <div id="controls">
+      <input id="chatInput" type="text" placeholder="Type a message..." />
+      <button id="chatSend">Send</button>
     </div>
     <hr>
-    <div id="chat">
-      <!-- Chat messages will appear here -->
-    </div>
-    <input id="chatInput" type="text" placeholder="Type a message..." />
-    <button id="chatSend">Send</button>
-
-    <!-- Socket.IO client library -->
+    <div id="chat">Chat messages will appear here</div>
+    
+    <!-- Load Socket.IO client library -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
       const socket = io();
 
-      // Ask for a username and send joinGame event
+      // When connected, ask for a username and join the game.
       socket.on('connect', () => {
         let username = prompt("Enter your username:");
         if (!username) {
@@ -59,54 +94,54 @@
         socket.emit('joinGame', username);
       });
 
-      // Update location display when the server sends a locationUpdate event
+      // Listen for location updates from the server.
       socket.on('locationUpdate', (data) => {
         const locationDiv = document.getElementById('location');
         const exitsDiv = document.getElementById('exits');
 
-        // Update the location description
+        // Update location description.
         locationDiv.textContent = data.description;
 
-        // Clear previous exit links
-        exitsDiv.innerHTML = '';
+        // Clear any existing exit links.
+        exitsDiv.innerHTML = "";
 
-        // Create a clickable link for each exit
-        for (let exit in data.exits) {
+        // Create clickable links for each available exit.
+        for (const exit in data.exits) {
           const link = document.createElement('a');
           link.textContent = exit;
           link.href = "#";
-          link.onclick = (e) => {
+          link.onclick = function(e) {
             e.preventDefault();
-            // Emit a "move" event with the chosen destination
+            // Emit a "move" event with the chosen destination.
             socket.emit('move', exit);
           };
           exitsDiv.appendChild(link);
         }
       });
 
-      // Display chat messages from the server
+      // Display chat messages in the chat area.
       socket.on('message', (msg) => {
         const chatDiv = document.getElementById('chat');
         const p = document.createElement('p');
         p.textContent = msg;
         chatDiv.appendChild(p);
-        // Auto-scroll to the bottom
+        // Auto-scroll to the bottom of the chat.
         chatDiv.scrollTop = chatDiv.scrollHeight;
       });
 
-      // Send chat messages when the "Send" button is clicked
-      document.getElementById('chatSend').onclick = () => {
+      // Send a chat message when the "Send" button is clicked.
+      document.getElementById('chatSend').onclick = function() {
         const chatInput = document.getElementById('chatInput');
         const text = chatInput.value;
         if (text) {
           socket.emit('message', text);
-          chatInput.value = '';
+          chatInput.value = "";
         }
       };
 
-      // Allow sending chat messages by pressing Enter
+      // Allow sending chat messages by pressing Enter.
       document.getElementById('chatInput').addEventListener('keyup', function(event) {
-        if (event.key === 'Enter') {
+        if (event.key === "Enter") {
           document.getElementById('chatSend').click();
         }
       });
